@@ -1,0 +1,81 @@
+:root {
+  --bg: #140909;
+  --panel: #1f1110;
+  --line: #3a201b;
+  --text: #fff4ec;
+  --muted: #c9ada0;
+  --fire: #ff6229;
+  --fire-soft: rgba(255, 98, 41, 0.14);
+  --glow: rgba(255, 98, 41, 0.25);
+  --chip: #ffb08f;
+  --on-fire: #1a0b0b;
+  --spotify: #1ed760;
+}
+
+/* Cutie mode: same layout, pink palette. Set via document.body.dataset.mode. */
+body[data-mode="cutie"] {
+  --bg: #1a0a14;
+  --panel: #26101f;
+  --line: #45203a;
+  --text: #fff0f7;
+  --muted: #d6abc4;
+  --fire: #ff7eb6;
+  --fire-soft: rgba(255, 126, 182, 0.14);
+  --glow: rgba(255, 126, 182, 0.28);
+  --chip: #ffc2dd;
+  --on-fire: #2a0d1f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at 85% -10%, var(--glow), transparent 50%), var(--bg);
+  color: var(--text);
+  font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  transition: background-color 0.3s;
+}
+
+.modes { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 24px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
+.modes .mode { background: transparent; color: var(--muted); padding: 8px 18px; }
+.modes .mode.on { background: var(--fire); color: var(--on-fire); }
+
+main { max-width: 720px; margin: 0 auto; padding: 56px 16px 80px; }
+
+.eyebrow { color: var(--fire); font-weight: 800; letter-spacing: 0.12em; font-size: 13px; text-transform: uppercase; }
+h1 { font-size: clamp(40px, 9vw, 72px); line-height: 1; margin: 12px 0 16px; letter-spacing: -0.03em; }
+.lede { color: var(--muted); font-size: 18px; margin: 0 0 36px; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 24px; margin-bottom: 20px; }
+.panel h2 { margin: 0 0 6px; font-size: 20px; }
+.panel p { margin: 0 0 16px; color: var(--muted); }
+
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+button, .btn {
+  appearance: none; border: 0; cursor: pointer; text-decoration: none;
+  font: inherit; font-weight: 700; border-radius: 999px; padding: 12px 22px;
+  background: var(--fire); color: var(--on-fire); display: inline-flex; align-items: center; gap: 8px;
+}
+button:disabled { opacity: 0.5; cursor: progress; }
+.btn-spotify { background: var(--spotify); color: #06240f; }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+
+.file { display: block; border: 2px dashed var(--line); border-radius: 14px; padding: 18px; text-align: center; cursor: pointer; color: var(--muted); }
+.file:hover { border-color: var(--fire); color: var(--text); }
+.file input { display: none; }
+
+.error { background: rgba(255, 60, 60, 0.12); border: 1px solid #7a2626; color: #ffc9c9; border-radius: 14px; padding: 14px 16px; margin-bottom: 20px; }
+
+.roast h2 { font-size: clamp(28px, 6vw, 40px); line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.02em; }
+.diagnosis { display: inline-block; background: var(--fire-soft); border: 1px solid var(--fire); color: var(--chip); border-radius: 999px; padding: 6px 14px; font-weight: 700; font-size: 14px; margin-bottom: 18px; }
+.roast p { color: var(--text); font-size: 17px; margin: 0 0 14px; }
+.verdict { border-left: 3px solid var(--fire); padding-left: 14px; font-style: italic; color: var(--muted); }
+
+details { color: var(--muted); font-size: 14px; }
+details pre { white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow: auto; background: #0e0606; padding: 12px; border-radius: 10px; }
+
+.muted { color: var(--muted); font-size: 14px; }
+.spinner { width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
