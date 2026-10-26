@@ -19,10 +19,12 @@ Two ways in:
 
 ## Deploy (Vercel free tier)
 
-1. `npx vercel` (or push to GitHub and import in vercel.com).
-2. Project → Settings → Environment Variables: copy everything from `.env.local`, with
-   `SPOTIFY_REDIRECT_URI=https://<app>.vercel.app/api/auth/callback`.
-3. Redeploy.
+Live at https://played-out.vercel.app. The Vercel project is connected to this GitHub repo:
+- Push to `main` → production deploy.
+- Push to any other branch → preview deploy with its own URL (Spotify login won't work there: its redirect URI only allows the production domain).
+
+Env vars live in Vercel → Project → Settings → Environment Variables (same names as `.env.example`, with
+`SPOTIFY_REDIRECT_URI=https://played-out.vercel.app/api/auth/callback`). Changing them needs a redeploy.
 
 ## Editing the prompts
 
