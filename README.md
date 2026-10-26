@@ -44,9 +44,10 @@ Env vars live in Vercel → Project → Settings → Environment Variables (same
 
 ## Editing the prompts
 
-Everything sent to the model is in `prompts/`, one folder per mode:
-- `roast/system.md`, `cutie/system.md`: persona, tone, rules. Rewrite freely.
-- `roast/output-format.md`, `cutie/output-format.md`: appended to that mode's system prompt. Keep the 4 JSON keys (`headline`, `diagnosis`, `roast`, `verdict`) in both modes; the page reads them. In cutie mode `diagnosis` is shown as "Certified: …" and `roast` holds the compliments.
+Everything sent to the model is in `prompts/`, one folder per mode, one persona file per data source:
+- `roast/music.md`, `cutie/music.md`: used for Spotify login and the Spotify export. Music critic persona.
+- `roast/youtube.md`, `cutie/youtube.md`: used for Google/YouTube login. General-content persona (channels, categories, videos), no music specifics. `roast/youtube.md` copies the Tone line and em-dash rule from `roast/music.md`; keep them in sync by hand.
+- `roast/output-format.md`, `cutie/output-format.md`: appended after the persona file, for both sources. Keep the 4 JSON keys (`headline`, `diagnosis`, `roast`, `verdict`) in both modes; the page reads them. In cutie mode `diagnosis` is shown as "Certified: …" and `roast` holds the compliments.
 - `user.md`: the message carrying the data, shared by both modes. Placeholders: `{{name}}`, `{{source}}`, `{{data}}` (also usable in the system files).
 
 `<!-- comments -->` are stripped before sending. Locally, edits apply on the next roast (no restart), and the page shows the full assembled prompt under "Full prompt sent to the model". In production the prompt isn't exposed; redeploy to apply edits.
@@ -56,7 +57,7 @@ Everything sent to the model is in `prompts/`, one folder per mode:
 - `lib/summarize-api.ts`: Spotify API → summary (top artists/tracks ×3 ranges, recent 50, up to 1000 liked songs, playlists, followed artists)
 - `lib/google.ts`, `lib/summarize-youtube.ts`: Google OAuth + YouTube Data API → summary (up to 500 likes split into music/non-music, artists from "- Topic"/VEVO channels, genres from topic categories, playlists, subscriptions)
 - `lib/summarize-export.ts`: export zip → summary (lifetime plays, skips, eras, binges, private sessions, searches, ad-targeting labels)
-- `lib/prompt.ts`: assembles the prompt from `prompts/<mode>/*.md` + `prompts/user.md`
+- `lib/prompt.ts`: assembles the prompt from `prompts/<mode>/<music|youtube>.md` + `output-format.md` + `prompts/user.md`
 - `lib/rate-limit.ts`: per-IP roast limit (4/min, 30/day by default; shared across modes)
 - `lib/llm.ts`: Groq / Gemini with fallback. Model names are optional: it lists the provider's models and picks the best chat model (Groq: gpt-oss-120b > llama-4 > llama-3.3-70b > …), and re-picks if a pinned model 404s
 - `lib/card.ts`: 1080×1350 PNG share card

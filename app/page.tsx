@@ -103,7 +103,7 @@ export default function Home() {
 
   async function onDownload() {
     if (!result || !summary) return;
-    const blob = await drawCard(result.roast, summary.topArtists, window.location.host, result.mode);
+    const blob = await drawCard(result.roast, summary.topArtists, window.location.host, result.mode, topLabel);
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = COPY[result.mode].file;
@@ -118,11 +118,13 @@ export default function Home() {
   }
 
   const shown = result && result.mode === mode ? result : null;
+  const isYouTube = summary?.source === "youtube";
+  const topLabel = isYouTube ? "Top channels" : "Top artists";
 
   return (
     <main>
       <div className="eyebrow">Played Out</div>
-      <h1>{mode === "roast" ? "Your music taste, roasted." : "Your music taste, adored."}</h1>
+      <h1>{`Your ${isYouTube ? "YouTube" : "music"} taste, ${mode === "roast" ? "roasted" : "adored"}.`}</h1>
       <p className="lede">
         Sign in with Google (YouTube Music) or Spotify, or drop in your data export. An AI reads your listening history and either tears it apart or
         gushes over it. You pick.
@@ -149,7 +151,7 @@ export default function Home() {
         <>
           <section className="panel">
             <h2>Sign in with Google</h2>
-            <p>For YouTube Music and YouTube: your liked songs, playlists and subscriptions. Read-only, nothing is saved.</p>
+            <p>For YouTube: the videos you liked, your playlists and subscriptions. Read-only, nothing is saved.</p>
             <a className="btn btn-google" href="/api/auth/google/login">
               Sign in with Google
             </a>
@@ -180,7 +182,7 @@ export default function Home() {
           <h2>{summary.name ? `${copy.ready} ${summary.name}` : `${copy.ready} you`}</h2>
           <p>
             {{ spotify: "Pulled from your Spotify account.", youtube: "Pulled from your YouTube account.", export: "Pulled from your data export." }[summary.source]}
-            {summary.topArtists.length > 0 && ` Top artists: ${summary.topArtists.join(", ")}.`}
+            {summary.topArtists.length > 0 && ` ${topLabel}: ${summary.topArtists.join(", ")}.`}
           </p>
           <div className="row">
             <button onClick={onGenerate} disabled={!!loading}>

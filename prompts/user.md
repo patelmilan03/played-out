@@ -9,5 +9,5 @@
 Data source: {{source}}.
 Name: {{name}}
 
-Listening data:
+Their data:
 {{data}}

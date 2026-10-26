@@ -43,7 +43,7 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number,
 }
 
 // Renders the share card as a 1080x1350 PNG (Instagram portrait size).
-export function drawCard(roast: Roast, topArtists: string[], site: string, mode: Mode): Promise<Blob> {
+export function drawCard(roast: Roast, topArtists: string[], site: string, mode: Mode, topLabel = "Top artists"): Promise<Blob> {
   const t = THEMES[mode];
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -97,7 +97,7 @@ export function drawCard(roast: Roast, topArtists: string[], site: string, mode:
 
   ctx.globalAlpha = 0.55;
   ctx.font = font(600, 30);
-  if (topArtists.length) wrap(ctx, `Top artists: ${topArtists.join(" · ")}`, PAD, H - PAD - 110, W - PAD * 2, 40, 2);
+  if (topArtists.length) wrap(ctx, `${topLabel}: ${topArtists.join(" · ")}`, PAD, H - PAD - 110, W - PAD * 2, 40, 2);
   ctx.globalAlpha = 1;
   ctx.fillStyle = t.accent;
   ctx.font = font(700, 30);

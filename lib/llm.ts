@@ -92,7 +92,8 @@ async function callGemini(model: string, system: string, user: string): Promise<
 }
 
 // Models ignore "no em-dashes" often enough that it's enforced here too.
-const tidy = (s: unknown) => String(s ?? "").replace(/\s*—\s*/g, ", ").replace(/,\s*,/g, ",");
+// Spaced en-dashes ("a – b") are the same habit; unspaced ones ("0–5am") are ranges and stay.
+const tidy = (s: unknown) => String(s ?? "").replace(/\s*—\s*|\s+–\s+/g, ", ").replace(/,\s*,/g, ",");
 
 function parseRoast(text: string): Roast {
   const cleaned = text.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();

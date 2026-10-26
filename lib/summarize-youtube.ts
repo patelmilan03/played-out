@@ -1,8 +1,9 @@
 import { countBy, fmtDuration, median, pct, shareMap, spread, topN, unique } from "./stats";
 import type { ListeningSummary } from "./types";
 
-// YouTube Data API v3 -> summary. The API has no watch history, so this works from
-// likes (YouTube Music likes are YouTube likes), playlists and subscriptions.
+// YouTube Data API v3 -> summary of everything they engage with (not just music).
+// The API has no watch history, so this works from likes, playlists and subscriptions;
+// music likes (incl. YouTube Music) get their own "musicCorner" section.
 // Quota: ~1 unit per call, ~16 units per user against a 10,000/day free quota.
 
 type Get = <T>(path: string) => Promise<T>;
@@ -19,6 +20,13 @@ type Subscription = { snippet: { title: string } };
 const LIKED_CAP = 500;
 const SUBS_CAP = 200;
 const MUSIC_CATEGORY = "10";
+
+// YouTube's fixed video category IDs (snippet.categoryId).
+const CATEGORIES: Record<string, string> = {
+  "1": "Film & Animation", "2": "Autos & Vehicles", "10": "Music", "15": "Pets & Animals", "17": "Sports",
+  "19": "Travel & Events", "20": "Gaming", "22": "People & Blogs", "23": "Comedy", "24": "Entertainment",
+  "25": "News & Politics", "26": "Howto & Style", "27": "Education", "28": "Science & Technology", "29": "Nonprofits & Activism",
+};
 
 // Wikipedia topic URLs that just mean "music" or "not music" add no flavour.
 const GENERIC_TOPICS = /^(Music|Entertainment|Lifestyle \(sociology\)|Society|Knowledge|Film|Television program|Video game culture|Hobby)$/i;
@@ -83,23 +91,31 @@ export async function buildYouTubeSummary(get: Get): Promise<ListeningSummary> {
   const label = (v: Video) => `${cleanTitle(v.snippet.title)} — ${artistOf(v.snippet.channelTitle)}`;
   const artistCounts = countBy(music, (v) => artistOf(v.snippet.channelTitle));
   const secs = music.map((v) => isoToSeconds(v.contentDetails?.duration)).filter(Boolean);
-  const genres = countBy(
-    music.flatMap((v) => (v.topicDetails?.topicCategories ?? []).map(topicName)).filter((t) => !GENERIC_TOPICS.test(t)),
-    (g) => g,
-  );
+  const topicsOf = (vs: Video[]) =>
+    countBy(vs.flatMap((v) => (v.topicDetails?.topicCategories ?? []).map(topicName)).filter((t) => !GENERIC_TOPICS.test(t)), (g) => g);
+  const genres = topicsOf(music);
+  const channelCounts = countBy(videos, (v) => v.snippet.channelTitle);
+  const allSecs = videos.map((v) => isoToSeconds(v.contentDetails?.duration)).filter(Boolean);
 
   const data: Record<string, unknown> = {
-    note: "YouTube has no play history API: this is what they liked, saved and subscribed to, not how often they played it.",
+    note: "YouTube has no watch history API: this is what they liked, saved and subscribed to, not how much they watched.",
     account: me ? { channelName: me.title, onYouTubeSince: me.publishedAt.slice(0, 10) } : "no channel",
     likes: {
       totalLiked: liked?.total ?? videos.length,
       analyzed: videos.length,
-      musicShare: pct(music.length, videos.length),
+      byCategory: shareMap(countBy(videos, (v) => CATEGORIES[v.snippet.categoryId ?? ""] ?? "Other"), 15),
+      topChannels: topN(channelCounts, 15).map(([c, n]) => `${c} (${n} liked)`),
+      topTopics: topN(topicsOf(videos), 15).map(([t]) => t),
+      mostRecent: unique(videos.map((v) => `${v.snippet.title} — ${v.snippet.channelTitle}`)).slice(0, 15),
+      typicalVideoLength: allSecs.length ? fmtDuration(median(allSecs) * 1000) : "n/a",
+      over1Hour: videos.filter((v) => isoToSeconds(v.contentDetails?.duration) >= 3600).length,
+      shorts: videos.filter((v) => { const s = isoToSeconds(v.contentDetails?.duration); return s > 0 && s <= 60; }).length,
+      likedVideoUploadYears: shareMap(countBy(videos, (v) => v.snippet.publishedAt.slice(0, 4)), 10),
     },
   };
 
   if (music.length) {
-    data.likedMusic = {
+    data.musicCorner = {
       count: music.length,
       topArtists: topN(artistCounts, 25).map(([a, n]) => `${a} (${n} liked)`),
       mostRecentLikes: unique(music.map(label)).slice(0, 15),
@@ -120,7 +136,7 @@ export async function buildYouTubeSummary(get: Get): Promise<ListeningSummary> {
     data.likedNonMusic = {
       count: other.length,
       topChannels: topN(countBy(other, (v) => v.snippet.channelTitle), 10).map(([c, n]) => `${c} (${n})`),
-      sample: spread(unique(other.map((v) => `${v.snippet.title} — ${v.snippet.channelTitle}`)), 12),
+      sample: spread(unique(other.map((v) => `${v.snippet.title} — ${v.snippet.channelTitle}`)), 20),
     };
   }
 
@@ -146,7 +162,8 @@ export async function buildYouTubeSummary(get: Get): Promise<ListeningSummary> {
   return {
     source: "youtube",
     name: me?.title ?? null,
-    topArtists: topN(artistCounts, 3).map(([a]) => a),
+    // For YouTube these are top channels across all likes (the card labels them so).
+    topArtists: topN(channelCounts, 3).map(([c]) => c),
     data,
   };
 }

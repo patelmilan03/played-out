@@ -1,5 +1,5 @@
 <!--
-  ROAST OUTPUT FORMAT: appended to the end of roast/system.md.
+  ROAST OUTPUT FORMAT: appended to the end of roast/music.md and roast/youtube.md.
   The page reads exactly these four keys. You can change the descriptions,
   lengths and paragraph count, but keep the key names and JSON-only reply,
   or the roast won't display.

@@ -17,17 +17,19 @@ function fill(template: string, vars: Record<string, string>): string {
 }
 
 export function buildPrompt(summary: ListeningSummary, mode: Mode) {
+  // Spotify sources get the music critic; YouTube gets the general-content critic.
+  const persona = summary.source === "youtube" ? "youtube.md" : "music.md";
   const vars = {
     source: {
       spotify: "Spotify Web API (recent top lists, liked songs, playlists)",
       export: "Spotify privacy data export",
-      youtube: "YouTube / YouTube Music account (liked songs and videos, playlists, subscriptions; no play history)",
+      youtube: "YouTube account (liked videos of every kind, playlists, subscriptions; no watch history)",
     }[summary.source],
     name: summary.name ?? "unknown",
     data: JSON.stringify(summary.data),
   };
   return {
-    system: fill(`${read(`${mode}/system.md`)}\n\n${read(`${mode}/output-format.md`)}`, vars),
+    system: fill(`${read(`${mode}/${persona}`)}\n\n${read(`${mode}/output-format.md`)}`, vars),
     user: fill(read("user.md"), vars),
   };
 }
