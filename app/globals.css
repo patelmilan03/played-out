@@ -60,6 +60,7 @@ button, .btn {
 }
 button:disabled { opacity: 0.5; cursor: progress; }
 .btn-spotify { background: var(--spotify); color: #06240f; }
+.btn-google { background: #fff; color: #1f1f1f; }
 .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
 
 .file { display: block; border: 2px dashed var(--line); border-radius: 14px; padding: 18px; text-align: center; cursor: pointer; color: var(--muted); }
