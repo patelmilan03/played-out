@@ -4,7 +4,8 @@ Spotify listening history → free-tier LLM → share card. Two modes:
 - **Roast**: unhinged, disappointed-parent roast.
 - **Cutie**: wholesome hype-bestie who adores everything about your taste.
 
-Two ways in:
+Three ways in:
+- **Google login** for YouTube / YouTube Music (YouTube Data API, read-only): liked songs and videos, playlists, subscriptions. No play history (the API doesn't expose it). Up to 100 test users while the Google app is unverified; unlimited after verification.
 - **Spotify login** (OAuth). Dev Mode: app owner needs Premium, max 5 allowlisted users.
 - **Data export upload** (spotify.com/account/privacy). Parsed in the browser; works for anyone.
 
@@ -16,6 +17,21 @@ Two ways in:
 3. Keys: Groq at console.groq.com/keys, Gemini at aistudio.google.com/apikey (one is enough; both = fallback).
 4. `cp .env.example .env.local` and fill it in.
 5. `npm install` then `npm run dev`, then open **http://127.0.0.1:3000** (not localhost: Spotify rejects localhost redirects and cookies are per-host).
+
+## Google / YouTube setup
+
+1. console.cloud.google.com → create a project (e.g. "played-out").
+2. APIs & Services → Library → **YouTube Data API v3** → Enable.
+3. Google Auth Platform (OAuth consent screen) → External → app name, support email, developer email.
+   - Data access / Scopes: add `https://www.googleapis.com/auth/youtube.readonly`.
+   - Audience: leave in **Testing**, add each friend's Google email under Test users (max 100).
+4. Clients → Create client → **Web application**. Authorized redirect URIs:
+   `https://played-out.vercel.app/api/auth/google/callback` and `http://127.0.0.1:3000/api/auth/google/callback`.
+5. Put the client ID/secret in `.env.local` (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`) and in Vercel's env vars (production redirect URI).
+
+Testing mode: users see a "Google hasn't verified this app" screen (Advanced → Continue). To open it to anyone with no warning, submit the app for verification: needs a privacy policy page, a homepage and a domain you own (a custom domain; `*.vercel.app` can't be verified). Free; review takes days to weeks.
+
+Quota: ~16 units per login against 10,000/day free, so roughly 600 logins/day.
 
 ## Deploy (Vercel free tier)
 
@@ -38,6 +54,7 @@ Everything sent to the model is in `prompts/`, one folder per mode:
 ## Layout
 
 - `lib/summarize-api.ts`: Spotify API → summary (top artists/tracks ×3 ranges, recent 50, up to 1000 liked songs, playlists, followed artists)
+- `lib/google.ts`, `lib/summarize-youtube.ts`: Google OAuth + YouTube Data API → summary (up to 500 likes split into music/non-music, artists from "- Topic"/VEVO channels, genres from topic categories, playlists, subscriptions)
 - `lib/summarize-export.ts`: export zip → summary (lifetime plays, skips, eras, binges, private sessions, searches, ad-targeting labels)
 - `lib/prompt.ts`: assembles the prompt from `prompts/<mode>/*.md` + `prompts/user.md`
 - `lib/rate-limit.ts`: per-IP roast limit (4/min, 30/day by default; shared across modes)

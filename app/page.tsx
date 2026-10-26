@@ -48,13 +48,21 @@ export default function Home() {
       setError(err);
       window.history.replaceState(null, "", "/");
     }
-    fetch(`/api/spotify/summary?tz=${new Date().getTimezoneOffset()}`)
-      .then(async (res) => {
-        const body = await res.json();
-        if (res.ok) setSummary(body);
-        else if (res.status !== 401) setError(body.error);
+    // Whichever login cookie exists wins; 401 just means "not logged in with that one".
+    const load = async (url: string) => {
+      const res = await fetch(url);
+      const body = await res.json();
+      if (res.ok) return body as ListeningSummary;
+      if (res.status !== 401) throw new Error(body.error);
+      return null;
+    };
+    Promise.allSettled([load("/api/youtube/summary"), load(`/api/spotify/summary?tz=${new Date().getTimezoneOffset()}`)])
+      .then((results) => {
+        const found = results.find((r) => r.status === "fulfilled" && r.value);
+        if (found?.status === "fulfilled" && found.value) return setSummary(found.value);
+        const failed = results.find((r) => r.status === "rejected");
+        if (failed?.status === "rejected") setError(failed.reason instanceof Error ? failed.reason.message : "Couldn't reach the server");
       })
-      .catch(() => setError("Couldn't reach the server"))
       .finally(() => setLoading(null));
   }, []);
 
@@ -104,7 +112,7 @@ export default function Home() {
   }
 
   async function onReset() {
-    if (summary?.source === "spotify") await fetch("/api/auth/logout", { method: "POST" });
+    if (summary?.source !== "export") await fetch("/api/auth/logout", { method: "POST" });
     setSummary(null);
     setResult(null);
   }
@@ -116,7 +124,7 @@ export default function Home() {
       <div className="eyebrow">Played Out</div>
       <h1>{mode === "roast" ? "Your music taste, roasted." : "Your music taste, adored."}</h1>
       <p className="lede">
-        Connect Spotify or drop in your data export. An AI reads your listening history and either tears it apart or
+        Sign in with Google (YouTube Music) or Spotify, or drop in your data export. An AI reads your listening history and either tears it apart or
         gushes over it. You pick.
       </p>
 
@@ -140,8 +148,15 @@ export default function Home() {
       {!summary && (
         <>
           <section className="panel">
+            <h2>Sign in with Google</h2>
+            <p>For YouTube Music and YouTube: your liked songs, playlists and subscriptions. Read-only, nothing is saved.</p>
+            <a className="btn btn-google" href="/api/auth/google/login">
+              Sign in with Google
+            </a>
+          </section>
+          <section className="panel">
             <h2>Log in with Spotify</h2>
-            <p>Top artists and tracks, recent plays, liked songs, playlists. Beta: only allowlisted accounts work for now.</p>
+            <p>Top artists and tracks, recent plays, liked songs, playlists. Invite only: Spotify limits this to 5 people.</p>
             <a className="btn btn-spotify" href="/api/auth/login">
               Connect Spotify
             </a>
@@ -164,7 +179,7 @@ export default function Home() {
         <section className="panel">
           <h2>{summary.name ? `${copy.ready} ${summary.name}` : `${copy.ready} you`}</h2>
           <p>
-            {summary.source === "spotify" ? "Pulled from your Spotify account." : "Pulled from your data export."}
+            {{ spotify: "Pulled from your Spotify account.", youtube: "Pulled from your YouTube account.", export: "Pulled from your data export." }[summary.source]}
             {summary.topArtists.length > 0 && ` Top artists: ${summary.topArtists.join(", ")}.`}
           </p>
           <div className="row">
@@ -172,7 +187,7 @@ export default function Home() {
               {shown ? copy.again : copy.button}
             </button>
             <button className="btn-ghost" onClick={onReset} disabled={!!loading}>
-              {summary.source === "spotify" ? "Log out" : "Start over"}
+              {summary.source === "export" ? "Start over" : "Log out"}
             </button>
           </div>
         </section>

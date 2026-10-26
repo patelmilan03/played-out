@@ -18,10 +18,11 @@ function fill(template: string, vars: Record<string, string>): string {
 
 export function buildPrompt(summary: ListeningSummary, mode: Mode) {
   const vars = {
-    source:
-      summary.source === "spotify"
-        ? "Spotify Web API (recent top lists, liked songs, playlists)"
-        : "Spotify privacy data export",
+    source: {
+      spotify: "Spotify Web API (recent top lists, liked songs, playlists)",
+      export: "Spotify privacy data export",
+      youtube: "YouTube / YouTube Music account (liked songs and videos, playlists, subscriptions; no play history)",
+    }[summary.source],
     name: summary.name ?? "unknown",
     data: JSON.stringify(summary.data),
   };
