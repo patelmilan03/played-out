@@ -22,7 +22,8 @@ export function googleAuthorizeUrl(state: string): string {
     scope: GOOGLE_SCOPE,
     access_type: "online",
     include_granted_scopes: "true",
-    prompt: "select_account",
+    // No prompt=select_account: Google shows its account picker on its own when
+    // several accounts are signed in, and skips it when there's only one.
     state,
   });
   return `${AUTH}?${q}`;
